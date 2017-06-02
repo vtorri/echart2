@@ -1,0 +1,14 @@
+[binaries]
+c = 'i686-w64-mingw32-gcc.exe'
+ar = 'ar.exe'
+strip = 'strip.exe'
+pkgconfig = "pkg-config.exe"
+
+[properties]
+c_args = ['-DDLL_EXPORT']
+
+[host_machine]
+system = 'windows'
+cpu_family = 'x86'
+cpu = 'i686'
+endian = 'little'
