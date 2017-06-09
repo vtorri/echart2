@@ -16,6 +16,10 @@
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include <stdio.h>
 
 #include <Eina.h>
@@ -60,7 +64,7 @@ echart_init(void)
         return --_echart_init_count;
     }
 
-    echart_log_dom_global = eina_log_domain_register("echart",
+    echart_log_dom_global = eina_log_domain_register(PACKAGE,
                                                      ECHART_DEFAULT_LOG_COLOR);
     if (echart_log_dom_global < 0)
     {
