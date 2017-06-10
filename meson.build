@@ -1,22 +1,17 @@
 project('echart', 'c', version : '0.0.1')
 
-as_name = meson.project_name()
-as_version = meson.project_version()
-conf = configuration_data()
-conf.set_quoted('VERSION', as_version)
-conf.set_quoted('PACKAGE', as_name)
-configure_file(output : 'config.h',
-               configuration : conf)
+### Library
 
-deplib = [dependency('eina'),
-          dependency('evas')]
+dep_lib = [dependency('eina'),
+           dependency('evas'),
+           dependency('eina')]
 
-srclib = ['src/lib/Echart.h',
-          'src/lib/echart_chart.c',
-          'src/lib/echart_data.c',
-          'src/lib/echart_main.c',
-          'src/lib/echart_data.h',
-          'src/lib/echart_private.h']
+src_lib = ['src/lib/Echart.h',
+           'src/lib/echart_chart.c',
+           'src/lib/echart_data.c',
+           'src/lib/echart_main.c',
+           'src/lib/echart_data.h',
+           'src/lib/echart_private.h']
 
 cflags = ['-Wall',
           '-Wextra',
@@ -27,26 +22,37 @@ cflags = ['-Wall',
           '-Wpointer-arith',
           '-Wno-missing-field-initializers']
 
-cflagslib = ['-DECHART_BUILD',
-             '-DHAVE_CONFIG_H',
-             cflags]
+cflags_lib = ['-DECHART_BUILD',
+              '-DHAVE_CONFIG_H',
+              cflags]
 
-libbin = shared_library('echart',
-                        srclib,
-                        c_args : cflagslib,
-                        dependencies : deplib)
+dep_bin = shared_library('echart',
+                         src_lib,
+                         c_args : cflags_lib,
+                         dependencies : dep_lib)
 
-cflagsbin = [cflags]
-incbin = include_directories('src/lib')
-depbin = declare_dependency(link_with : libbin,
-                            include_directories : incbin)
-srcbin = ['src/bin/echart.c']
+### Binary
+
+cflags_bin = [cflags]
+inc_bin = include_directories('src/lib')
+dep_bin = declare_dependency(link_with : dep_bin,
+                             include_directories : inc_bin)
+src_bin = ['src/bin/echart.c']
 
 executable('echart',
-           srcbin,
-           c_args : cflagsbin,
-           dependencies : [depbin,
+           src_bin,
+           c_args : cflags_bin,
+           dependencies : [dep_bin,
                            dependency('ecore-evas'),
-                           dependency('evas'),
                            dependency('ecore'),
-                           dependency('eina')])
+                           dep_lib])
+
+### config.h
+
+as_name = meson.project_name()
+as_version = meson.project_version()
+conf = configuration_data()
+conf.set_quoted('VERSION', as_version)
+conf.set_quoted('PACKAGE', as_name)
+configure_file(output : 'config.h',
+               configuration : conf)
