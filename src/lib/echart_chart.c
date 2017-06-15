@@ -35,14 +35,10 @@
  * @cond LOCAL
  */
 
-typedef struct _Echart_Text
+typedef struct
 {
     char *text;
-    char *font_name;
-    int font_size;
-    unsigned int font_color;
-    Eina_Bool bold : 1;
-    Eina_Bool italic : 1;
+    Echart_Font_Style fs;
 } Echart_Text;
 
 struct _Echart_Chart
@@ -83,12 +79,12 @@ echart_chart_new(int width, int height)
     if (!chart)
         return NULL;
 
-    chart->title.font_color = 0xff000000;
-    chart->title.bold = EINA_TRUE;
-    chart->title_haxis.font_color = 0xff000000;
-    chart->title_haxis.italic = EINA_TRUE;
-    chart->title_vaxis.font_color = 0xff000000;
-    chart->title_vaxis.italic = EINA_TRUE;
+    chart->title.fs.font_color = 0xff000000;
+    chart->title.fs.bold = EINA_TRUE;
+    chart->title_haxis.fs.font_color = 0xff000000;
+    chart->title_haxis.fs.italic = EINA_TRUE;
+    chart->title_vaxis.fs.font_color = 0xff000000;
+    chart->title_vaxis.fs.italic = EINA_TRUE;
     chart->width = width;
     chart->height = height;
     chart->bg_color = 0xff808080;
@@ -140,45 +136,47 @@ echart_chart_title_get(const Echart_Chart *chart)
 
 EAPI void
 echart_chart_title_style_set(Echart_Chart *chart,
-                             const char *font_name,
-                             int font_size,
-                             unsigned int font_color,
-                             Eina_Bool bold,
-                             Eina_Bool italic)
+                             const Echart_Font_Style *fs)
 {
     char *fn;
 
     if (!chart)
         return;
 
-    fn = strdup(font_name);
+    fn = strdup(fs->font_name);
     if (fn)
     {
-        free(chart->title.font_name);
-        chart->title.font_name = fn;
+        free(chart->title.fs.font_name);
+        chart->title.fs.font_name = fn;
     }
-    chart->title.font_size = font_size;
-    chart->title.font_color = font_color;
-    chart->title.bold = bold;
-    chart->title.italic = italic;
+    chart->title.fs.font_size = fs->font_size;
+    chart->title.fs.font_color = fs->font_color;
+    chart->title.fs.bold = fs->bold;
+    chart->title.fs.italic = fs->italic;
 }
 
-EAPI void
+EAPI Eina_Bool
 echart_chart_title_style_get(const Echart_Chart *chart,
-                             const char **font_name,
-                             int *font_size,
-                             unsigned int *font_color,
-                             Eina_Bool *bold,
-                             Eina_Bool *italic)
+                             Echart_Font_Style *fs)
 {
     if (!chart)
-        return;
+        goto err_;
 
-    if (font_name) *font_name = chart->title.font_name;
-    if (font_size) *font_size = chart->title.font_size;
-    if (font_color) *font_color = chart->title.font_color;
-    if (bold) *bold = chart->title.bold;
-    if (italic) *italic = chart->title.italic;
+    if (fs)
+    {
+        fs->font_name = chart->title.fs.font_name;
+        fs->font_size = chart->title.fs.font_size;
+        fs->font_color = chart->title.fs.font_color;
+        fs->bold = chart->title.fs.bold;
+        fs->italic = chart->title.fs.italic;
+
+        return EINA_TRUE;
+    }
+
+  err_:
+    memset(fs, 0, sizeof(Echart_Font_Style));
+
+    return EINA_FALSE;
 }
 
 EAPI void
@@ -208,45 +206,47 @@ echart_chart_title_haxis_get(const Echart_Chart *chart)
 
 EAPI void
 echart_chart_title_haxis_style_set(Echart_Chart *chart,
-                                   const char *font_name,
-                                   int font_size,
-                                   unsigned int font_color,
-                                   Eina_Bool bold,
-                                   Eina_Bool italic)
+                                   const Echart_Font_Style *fs)
 {
     char *fn;
 
     if (!chart)
         return;
 
-    fn = strdup(font_name);
+    fn = strdup(fs->font_name);
     if (fn)
     {
-        free(chart->title_haxis.font_name);
-        chart->title_haxis.font_name = fn;
+        free(chart->title_haxis.fs.font_name);
+        chart->title_haxis.fs.font_name = fn;
     }
-    chart->title_haxis.font_size = font_size;
-    chart->title_haxis.font_color = font_color;
-    chart->title_haxis.bold = bold;
-    chart->title_haxis.italic = italic;
+    chart->title_haxis.fs.font_size = fs->font_size;
+    chart->title_haxis.fs.font_color = fs->font_color;
+    chart->title_haxis.fs.bold = fs->bold;
+    chart->title_haxis.fs.italic = fs->italic;
 }
 
-EAPI void
+EAPI Eina_Bool
 echart_chart_title_haxis_style_get(const Echart_Chart *chart,
-                                   const char **font_name,
-                                   int *font_size,
-                                   unsigned int *font_color,
-                                   Eina_Bool *bold,
-                                   Eina_Bool *italic)
+                                   Echart_Font_Style *fs)
 {
     if (!chart)
-        return;
+        goto err_;
 
-    if (font_name) *font_name = chart->title_haxis.font_name;
-    if (font_size) *font_size = chart->title_haxis.font_size;
-    if (font_color) *font_color = chart->title_haxis.font_color;
-    if (bold) *bold = chart->title_haxis.bold;
-    if (italic) *italic = chart->title_haxis.italic;
+    if (fs)
+    {
+        fs->font_name = chart->title_haxis.fs.font_name;
+        fs->font_size = chart->title_haxis.fs.font_size;
+        fs->font_color = chart->title_haxis.fs.font_color;
+        fs->bold = chart->title_haxis.fs.bold;
+        fs->italic = chart->title_haxis.fs.italic;
+
+        return EINA_TRUE;
+    }
+
+  err_:
+    memset(fs, 0, sizeof(Echart_Font_Style));
+
+    return EINA_FALSE;
 }
 
 EAPI void
@@ -276,45 +276,47 @@ echart_chart_title_vaxis_get(const Echart_Chart *chart)
 
 EAPI void
 echart_chart_title_vaxis_style_set(Echart_Chart *chart,
-                                   const char *font_name,
-                                   int font_size,
-                                   unsigned int font_color,
-                                   Eina_Bool bold,
-                                   Eina_Bool italic)
+                                   const Echart_Font_Style *fs)
 {
     char *fn;
 
     if (!chart)
         return;
 
-    fn = strdup(font_name);
+    fn = strdup(fs->font_name);
     if (fn)
     {
-        free(chart->title_vaxis.font_name);
-        chart->title_vaxis.font_name = fn;
+        free(chart->title_vaxis.fs.font_name);
+        chart->title_vaxis.fs.font_name = fn;
     }
-    chart->title_vaxis.font_size = font_size;
-    chart->title_vaxis.font_color = font_color;
-    chart->title_vaxis.bold = bold;
-    chart->title_vaxis.italic = italic;
+    chart->title_vaxis.fs.font_size = fs->font_size;
+    chart->title_vaxis.fs.font_color = fs->font_color;
+    chart->title_vaxis.fs.bold = fs->bold;
+    chart->title_vaxis.fs.italic = fs->italic;
 }
 
-EAPI void
+EAPI Eina_Bool
 echart_chart_title_vaxis_style_get(const Echart_Chart *chart,
-                                   const char **font_name,
-                                   int *font_size,
-                                   unsigned int *font_color,
-                                   Eina_Bool *bold,
-                                   Eina_Bool *italic)
+                                   Echart_Font_Style *fs)
 {
     if (!chart)
-        return;
+        goto err_;
 
-    if (font_name) *font_name = chart->title_vaxis.font_name;
-    if (font_size) *font_size = chart->title_vaxis.font_size;
-    if (font_color) *font_color = chart->title_vaxis.font_color;
-    if (bold) *bold = chart->title_vaxis.bold;
-    if (italic) *italic = chart->title_vaxis.italic;
+    if (fs)
+    {
+        fs->font_name = chart->title_vaxis.fs.font_name;
+        fs->font_size = chart->title_vaxis.fs.font_size;
+        fs->font_color = chart->title_vaxis.fs.font_color;
+        fs->bold = chart->title_vaxis.fs.bold;
+        fs->italic = chart->title_vaxis.fs.italic;
+
+        return EINA_TRUE;
+    }
+
+  err_:
+    memset(fs, 0, sizeof(Echart_Font_Style));
+
+    return EINA_FALSE;
 }
 
 EAPI void

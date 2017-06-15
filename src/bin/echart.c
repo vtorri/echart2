@@ -32,57 +32,12 @@
 #include <Echart.h>
 #include <echart_data.h>
 #include <echart_chart.h>
+#include <echart_line.h>
 
 static void
 _echart_delete_cb(Ecore_Evas *ee EINA_UNUSED)
 {
     ecore_main_loop_quit();
-}
-
-static Evas_Object *
-echart_text_object_add(Evas *evas, const char *text,
-                       const char *font_name,
-                       int font_size,
-                       unsigned int font_color,
-                       Eina_Bool bold,
-                       Eina_Bool italic)
-{
-    char buf[256];
-    char buf2[32];
-    Evas_Object *o;
-    int r;
-    int g;
-    int b;
-    int a;
-
-    if (!text)
-        return NULL;
-
-    *buf2 = '\0';
-    if (bold || italic)
-    {
-        memcpy(buf2, ":style=", 7);
-        if (!italic)
-            memcpy(buf2 + 7, "Bold", 5);
-        else if (!bold)
-            memcpy(buf2 + 7, "Italic", 7);
-        else
-            memcpy(buf2 + 7, "Bold Italic", 12);
-    }
-    snprintf(buf, sizeof(buf), "%s%s",
-             font_name ? font_name : "Sans", buf2);
-    buf[255] = '\0';
-    a = (font_color >> 24) | 0xff;
-    r = (font_color >> 16) | 0xff;
-    g = (font_color >> 8) | 0xff;
-    b = (font_color >> 0) | 0xff;
-    o = evas_object_text_add(evas);
-    evas_object_text_style_set(o, EVAS_TEXT_STYLE_PLAIN);
-    evas_object_color_set(o, r, g, b, a);
-    evas_object_text_font_set(o, buf, (font_size <= 0) ? 13 : font_size);
-    evas_object_text_text_set(o, text);
-
-    return o;
 }
 
 int main()
@@ -137,49 +92,14 @@ int main()
     echart_data_serie_append(d, s);
 
     chart = echart_chart_new(800, 600);
+    echart_chart_title_set(chart, "Company Performance");
     echart_chart_data_set(chart, d);
     echart_chart_size_get(chart, &w, &h);
     echart_chart_background_color_set(chart, 0xffffffff);
 
-    {
-        Efl_VG *root;
-        Efl_VG *line;
-        Evas_Coord w_main_title = 0, h_main_title = 0;
-        Evas_Coord w_haxis_title = 0, h_haxis_title = 0;
-        Evas_Coord w_haxis_text = 0, h_haxis_text = 0;
-        Evas_Coord w_chart, h_chart;
-
-        o = evas_object_rectangle_add(evas);
-        evas_object_color_set(o, 255, 255, 255, 255);
-        evas_object_focus_set(o, 1);
-        evas_object_move(o, 0, 0);
-        evas_object_resize(o, w, h);
-        //evas_object_event_callback_add(o, EVAS_CALLBACK_KEY_DOWN, _keydown, NULL);
-        evas_object_show(o);
-
-        o = echart_text_object_add(evas, "Company Performance",
-                                   NULL, 0,
-                                   0xff000000, EINA_TRUE, EINA_TRUE);
-        evas_object_geometry_get(o, NULL, NULL, &w_main_title, &h_main_title);
-        evas_object_move(o, (w - w_main_title) / 2, 0);
-        evas_object_show(o);
-
-        h_chart = h - (h_main_title + h_haxis_title + h_haxis_text);
-
-        o = evas_object_vg_add(evas);
-        evas_object_resize(o, w, h);
-        evas_object_move(o, 0, 0);
-        evas_object_show(o);
-
-        root = evas_object_vg_root_node_get(o);
-
-        line = evas_vg_shape_add(root);
-        evas_vg_shape_append_move_to(line, 10, h - 10);
-        evas_vg_shape_append_line_to(line, w - 10, h - 10);
-        /* evas_vg_shape_shape_append_close(line); */
-        evas_vg_shape_stroke_width_set(line, 1);
-        evas_vg_shape_stroke_color_set(line, 0, 0, 0, 255);
-    }
+    o = echart_line_object_add(evas);
+    echart_line_object_chart_set(o, chart);
+    evas_object_show(o);
 
     ecore_evas_resize(ee, w, h);
     ecore_evas_show(ee);
