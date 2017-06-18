@@ -91,6 +91,9 @@ int main()
     echart_serie_value_push(s, 540);
     echart_data_serie_append(d, s);
 
+    echart_data_ymin_set(d, 0);
+    echart_data_area_set(d, EINA_TRUE);
+
     chart = echart_chart_new(800, 600);
     echart_chart_title_set(chart, "Company Performance");
     echart_chart_data_set(chart, d);

@@ -48,6 +48,9 @@ struct _Echart_Data
     char *title;
     Echart_Serie *absciss;
     Eina_List *series;
+    double ymin;
+    double ymax;
+    Eina_Bool area : 1;
 };
 
 static Echart_Colors _echart_chart_colors_default[20] =
@@ -124,7 +127,7 @@ echart_serie_title_set(Echart_Serie *s, const char *title)
 }
 
 EAPI Echart_Colors
-echart_serie_color_get(Echart_Serie *s)
+echart_serie_color_get(const Echart_Serie *s)
 {
     if (!s)
     {
@@ -155,6 +158,12 @@ echart_serie_value_push(Echart_Serie *s, double y)
         if (y < s->ymin) s->ymin = y;
         if (y > s->ymax) s->ymax = y;
     }
+}
+
+EAPI const Eina_Inarray *
+echart_serie_values_get(const Echart_Serie *s)
+{
+    return s ? s->values : NULL;
 }
 
 EAPI Echart_Data *
@@ -205,6 +214,12 @@ echart_data_absciss_set(Echart_Data *d, Echart_Serie *s)
     d->absciss = s;
 }
 
+EAPI const Echart_Serie *
+echart_data_absciss_get(const Echart_Data *d)
+{
+    return d ? d->absciss : NULL;
+}
+
 EAPI Eina_Bool
 echart_data_serie_append(Echart_Data *d, Echart_Serie *s)
 {
@@ -222,15 +237,56 @@ echart_data_serie_append(Echart_Data *d, Echart_Serie *s)
     count = eina_list_count(d->series);
     s->color = _echart_chart_colors_default[count % 20];
     d->series = eina_list_append(d->series, s);
+    if (count == 0)
+    {
+        d->ymin = s->ymin;
+        d->ymax = s->ymax;
+    }
+    else
+    {
+        if (s->ymin < d->ymin) d->ymin = s->ymin;
+        if (s->ymax > d->ymax) d->ymax = s->ymax;
+    }
 
     return EINA_TRUE;
 }
 
-EAPI void
-echart_data_serie_ymin_set(Echart_Data *d, double ymin)
+EAPI const Eina_List *
+echart_data_series_get(const Echart_Data *d)
 {
-    Echart_Serie *s;
-    Eina_List *l;
-    EINA_LIST_FOREACH(d->series, l, s)
-        s->ymin = ymin;
+    return d ? d->series : NULL;
+}
+
+EAPI void
+echart_data_ymin_set(Echart_Data *d, double ymin)
+{
+    if (d)
+        d->ymin = ymin;
+}
+
+EAPI void
+echart_data_interval_get(const Echart_Data *d, double *ymin, double *ymax)
+{
+    if (!d)
+    {
+        if (ymin) *ymin = 0;
+        if (ymax) *ymax = 0;
+        return;
+    }
+
+    if (ymin) *ymin = d->ymin;
+    if (ymax) *ymax = d->ymax;
+}
+
+EAPI void
+echart_data_area_set(Echart_Data *d, Eina_Bool on)
+{
+    if (d)
+        d->area = !!on;
+}
+
+EAPI Eina_Bool
+echart_data_area_get(const Echart_Data *d)
+{
+    return d ? d->area : EINA_FALSE;
 }
