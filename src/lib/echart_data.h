@@ -27,6 +27,8 @@ EAPI void echart_serie_free(Echart_Serie *s);
 EAPI void echart_serie_title_set(Echart_Serie *s, const char *title);
 EAPI const char *echart_serie_title_get(const Echart_Serie *s);
 EAPI Echart_Colors echart_serie_color_get(const Echart_Serie *s);
+EAPI void echart_serie_opacity_set(Echart_Serie *s, double opacity);
+EAPI double echart_serie_opacity_get(const Echart_Serie *s);
 EAPI void echart_serie_value_push(Echart_Serie *s, double y);
 EAPI const Eina_Inarray *echart_serie_values_get(const Echart_Serie *s);
 

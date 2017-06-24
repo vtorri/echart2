@@ -87,10 +87,10 @@ echart_chart_new(int width, int height)
     chart->title_vaxis.fs.italic = EINA_TRUE;
     chart->width = width;
     chart->height = height;
-    chart->bg_color = 0xff808080;
+    chart->bg_color = 0xffffffff;
     chart->grid.x_nbr = 5;
     chart->grid.y_nbr = 5;
-    chart->grid.color = 0xff888888;
+    chart->grid.color = 0xffcccccc;
     chart->sub_grid.x_nbr = 0;
     chart->sub_grid.y_nbr = 0;
     chart->sub_grid.color = 0xffeeeeee;

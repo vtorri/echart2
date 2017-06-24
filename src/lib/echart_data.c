@@ -38,9 +38,10 @@ struct _Echart_Serie
 {
     char *title;
     Eina_Inarray *values;
+    Echart_Colors color;
     double ymin;
     double ymax;
-    Echart_Colors color;
+    double opacity;
 };
 
 struct _Echart_Data
@@ -50,6 +51,7 @@ struct _Echart_Data
     Eina_List *series;
     double ymin;
     double ymax;
+    double opacity;
     Eina_Bool area : 1;
 };
 
@@ -103,6 +105,8 @@ echart_serie_new(void)
         return NULL;
     }
 
+    s->opacity = 0.3;
+
     return s;
 }
 
@@ -126,6 +130,12 @@ echart_serie_title_set(Echart_Serie *s, const char *title)
     s->title = strdup(title);
 }
 
+EAPI const char *
+echart_serie_title_get(const Echart_Serie *s)
+{
+    return s ? s->title : NULL;
+}
+
 EAPI Echart_Colors
 echart_serie_color_get(const Echart_Serie *s)
 {
@@ -138,10 +148,19 @@ echart_serie_color_get(const Echart_Serie *s)
     return s->color;
 }
 
-EAPI const char *
-echart_serie_title_get(const Echart_Serie *s)
+EAPI void
+echart_serie_opacity_set(Echart_Serie *s, double opacity)
 {
-    return s ? s->title : NULL;
+    if (!s || (opacity < 0.0) || (opacity > 1.0))
+        return;
+
+    s->opacity = opacity;
+}
+
+EAPI double
+echart_serie_opacity_get(const Echart_Serie *s)
+{
+    return s ? s->opacity : 1.0;
 }
 
 EAPI void
