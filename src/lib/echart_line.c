@@ -168,17 +168,21 @@ _echart_line_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EIN
 
     if (has_dot)
     {
-        sd->dot = evas_vg_shape_add(sd->root);
-        evas_vg_shape_append_circle(sd->dot, xd, yd, 5);
-        evas_vg_node_color_set(sd->dot,
-                               COL_TO_R(cols.line),
-                               COL_TO_G(cols.line),
-                               COL_TO_B(cols.line),
-                               COL_TO_A(cols.line));
+        if (!sd->dot)
+        {
+            sd->dot = evas_vg_shape_add(sd->root);
+            evas_vg_shape_append_circle(sd->dot, xd, yd, 5);
+            evas_vg_node_color_set(sd->dot,
+                                   COL_TO_R(cols.line),
+                                   COL_TO_G(cols.line),
+                                   COL_TO_B(cols.line),
+                                   COL_TO_A(cols.line));
+        }
     }
     else
     {
         evas_vg_shape_reset(sd->dot);
+        sd->dot = NULL;
     }
 }
 
