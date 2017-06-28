@@ -52,10 +52,10 @@ executable('echart',
 
 ### config.h
 
-as_name = meson.project_name()
-as_version = meson.project_version()
-conf = configuration_data()
-conf.set_quoted('VERSION', as_version)
-conf.set_quoted('PACKAGE', as_name)
-configure_file(output : 'config.h',
-               configuration : conf)
+#as_name = meson.project_name()
+#as_version = meson.project_version()
+#conf = configuration_data()
+#conf.set_quoted('VERSION', as_version)
+#conf.set_quoted('PACKAGE', as_name)
+#configure_file(output : 'config.h',
+#               configuration : conf)
