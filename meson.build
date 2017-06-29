@@ -1,5 +1,7 @@
 project('echart', 'c', version : '0.0.1')
 
+cc = meson.get_compiler('c')
+
 ### Library
 
 dep_lib = [dependency('eina'),
@@ -29,10 +31,12 @@ cflags_lib = ['-DECHART_BUILD',
               '-DHAVE_CONFIG_H',
               cflags]
 
+libm = cc.find_library('m', required : true)
+
 dep_bin = shared_library('echart',
                          src_lib,
                          c_args : cflags_lib,
-                         dependencies : dep_lib)
+                         dependencies : [dep_lib, libm])
 
 ### Binary
 
