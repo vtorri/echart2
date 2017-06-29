@@ -69,6 +69,9 @@
 #define COL_TO_G(col_) (((col_) >> 8 ) & 0xff)
 #define COL_TO_B(col_) (((col_)      ) & 0xff)
 
+#define PAD(v_) (sd->padding + (v_))
+#define PAD2(v_) (2 * sd->padding + (v_))
+
 typedef struct
 {
     EINA_REFCOUNT;
@@ -76,15 +79,41 @@ typedef struct
     const Echart_Chart *chart;
     Evas_Object *bg;
     Evas_Object *title;
+    Eina_Inarray *ord_val;
     Evas_Object *vg;
     Efl_VG *root;
     Efl_VG *dot;
-    Evas_Coord h_title;
     Evas_Coord w_vg;
     Evas_Coord h_vg;
+    Evas_Coord padding;
 } Echart_Smart_Data;
 
 static Evas_Smart *_echart_line_smart = NULL;
+
+static void
+_echart_line_offsets_get(Echart_Smart_Data *sd,
+                         Evas_Coord *offset_left,
+                         Evas_Coord *offset_right,
+                         Evas_Coord *offset_top,
+                         Evas_Coord *offset_bottom)
+{
+    *offset_left = 10;
+    *offset_right = 10;
+    evas_object_geometry_get(sd->title, NULL, NULL, NULL, offset_top);
+    *offset_top += 10;
+    *offset_bottom = 10;
+}
+
+static void
+_echart_line_coords_get(Echart_Smart_Data *sd,
+                        double xmin, double xmax,
+                        double ymin, double ymax,
+                        double x, double y,
+                        Evas_Coord *xvg, Evas_Coord *yvg)
+{
+    *xvg = sd->padding + (sd->w_vg - 2 * sd->padding) * (x - xmin) / (xmax - xmin);
+    *yvg = sd->padding + (sd->h_vg - 2 * sd->padding) * (ymax - y) / (ymax - ymin);
+}
 
 static void
 _echart_line_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EINA_UNUSED, void *event)
@@ -98,6 +127,10 @@ _echart_line_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EIN
     const Eina_List *l;
     const Eina_Inarray *x_values;
     Echart_Colors cols;
+    Evas_Coord offset_left;
+    Evas_Coord offset_right;
+    Evas_Coord offset_top;
+    Evas_Coord offset_bottom;
     Evas_Coord xd;
     Evas_Coord yd;
     double *xv;
@@ -108,6 +141,10 @@ _echart_line_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EIN
 
     sd = d;
     ev = event;
+
+    _echart_line_offsets_get(sd,
+                             &offset_left, &offset_right,
+                             &offset_top, &offset_bottom);
 
     data = echart_chart_data_get(sd->chart);
     absciss = echart_data_absciss_get(data);
@@ -126,8 +163,8 @@ _echart_line_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EIN
     {
         const Eina_Inarray *y_values;
         double *yv;
-        Evas_Coord xp;
-        Evas_Coord yp;
+        Evas_Coord x;
+        Evas_Coord y;
         size_t i;
 
         y_values = echart_serie_values_get(serie);
@@ -135,18 +172,19 @@ _echart_line_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EIN
 
         for (i = 0; i < x_values->len; i++)
         {
-            xp = sd->w_vg * (xv[i] - xv[0]) / (xv[x_values->len - 1] - xv[0]) + 1;
-            xp += 10;
-            yp = sd->h_vg * (ymax - yv[i]) / (ymax -  ymin);
-            yp += sd->h_title + 10;
-            if ((ev->cur.canvas.x >= (xp - 3)) &&
-                (ev->cur.canvas.x <= (xp + 3)) &&
-                (ev->cur.canvas.y >= (yp - 3)) &&
-                (ev->cur.canvas.y <= (yp + 3)))
+            _echart_line_coords_get(sd,
+                                    xv[0], xv[x_values->len - 1],
+                                    ymin, ymax,
+                                    xv[i], yv[i],
+                                    &x, &y);
+            if ((ev->cur.canvas.x >= (x + offset_left - 3)) &&
+                (ev->cur.canvas.x <= (x + offset_left + 3)) &&
+                (ev->cur.canvas.y >= (y + offset_top - 3)) &&
+                (ev->cur.canvas.y <= (y + offset_top + 3)))
             {
                 has_dot = EINA_TRUE;
-                xd = xp - 10;
-                yd = yp - (sd->h_title + 10);
+                xd = x;
+                yd = y;
                 cols = echart_serie_color_get(serie);
             }
 
@@ -371,18 +409,22 @@ _echart_line_smart_calculate(Evas_Object *obj)
     double *xv;
     double ymin;
     double ymax;
-    int gxn;
     int gyn;
     int w;
     int h;
     int n;
     int i;
-    Evas_Coord w_title = 0;
+    Evas_Coord offset_left;
+    Evas_Coord offset_right;
+    Evas_Coord offset_top;
+    Evas_Coord offset_bottom;
 
     fprintf(stderr, " ** %s\n", __FUNCTION__);
 
     sd = evas_object_smart_data_get(obj);
     EINA_SAFETY_ON_NULL_RETURN(sd);
+
+    sd->padding = 5;
 
     /* background */
     echart_chart_size_get(sd->chart, &w, &h);
@@ -394,25 +436,36 @@ _echart_line_smart_calculate(Evas_Object *obj)
     /* title */
     if (echart_chart_title_get(sd->chart))
     {
+        Evas_Coord w_title;
+
         echart_chart_title_style_get(sd->chart, &fs);
         _echart_text_object_set(sd->title,
                                 echart_chart_title_get(sd->chart),
                                 &fs);
-        evas_object_geometry_get(sd->title, NULL, NULL, &w_title, &sd->h_title);
+        evas_object_geometry_get(sd->title, NULL, NULL, &w_title, NULL);
         evas_object_move(sd->title, (w - w_title) / 2, 0);
     }
 
+    /* echart_chart_grid_nbr_get(sd->chart, NULL, &gyn); */
+    /* if (gyn > 0) */
+    /* { */
+    /* } */
+
+    _echart_line_offsets_get(sd,
+                             &offset_left, &offset_right,
+                             &offset_top, &offset_bottom);
+
     /* vg */
-    sd->w_vg = w - 20;
-    sd->h_vg = h - (20 + sd->h_title);
+    sd->w_vg = w - (offset_left + offset_right);
+    sd->h_vg = h - (offset_top + offset_bottom);
     evas_object_resize(sd->vg, sd->w_vg, sd->h_vg);
-    evas_object_move(sd->vg, 10, sd->h_title + 10);
+    evas_object_move(sd->vg, offset_left, offset_top);
 
     /* axis */
     line = evas_vg_shape_add(sd->root);
-    evas_vg_shape_append_move_to(line, 0.5, 0.51);
-    evas_vg_shape_append_line_to(line, 0.5, sd->h_vg - 0.5);
-    evas_vg_shape_append_line_to(line, sd->w_vg - 0.5, sd->h_vg - 0.5);
+    evas_vg_shape_append_move_to(line, PAD(0.5), PAD(0.5));
+    evas_vg_shape_append_line_to(line, PAD(0.5), sd->h_vg - PAD(0.5));
+    evas_vg_shape_append_line_to(line, sd->w_vg - PAD(0.5), sd->h_vg - PAD(0.5));
     evas_vg_shape_stroke_width_set(line, 1);
     evas_vg_shape_stroke_color_set(line, 0, 0, 0, 255);
 
@@ -428,7 +481,7 @@ _echart_line_smart_calculate(Evas_Object *obj)
     ymax = (floor(ymax / pow(10, n - 1)) + 1) * pow(10, n - 1);
     col = echart_chart_grid_color_get(sd->chart);
 
-    echart_chart_grid_nbr_get(sd->chart, &gxn, &gyn);
+    echart_chart_grid_nbr_get(sd->chart, NULL, &gyn);
     if (gyn > 0)
     {
         for (i = 1; i <= gyn; i++)
@@ -436,69 +489,51 @@ _echart_line_smart_calculate(Evas_Object *obj)
             double y = i * (ymax - ymin) / gyn + ymin;
             int j = (ymax - y) * (sd->h_vg - 1) / (ymax - ymin);
             line = evas_vg_shape_add(sd->root);
-            evas_vg_shape_append_move_to(line, 0.5, j + 0.5);
-            evas_vg_shape_append_line_to(line, sd->w_vg - 0.5, j + 0.5);
+            evas_vg_shape_append_move_to(line, PAD(0.5), j + PAD(0.5));
+            evas_vg_shape_append_line_to(line, sd->w_vg - PAD2(0.5), j + PAD(0.5));
             evas_vg_shape_stroke_width_set(line, 1);
             evas_vg_shape_stroke_color_set(line,
                                            COL_TO_R(col), COL_TO_G(col), COL_TO_B(col), COL_TO_A(col));
         }
     }
 
-    if (echart_data_area_get(data))
-    {
-        EINA_LIST_FOREACH(series, l, serie)
-        {
-            const Eina_Inarray *y_values;
-            Echart_Colors cols;
-            double *yv;
-            double opacity;
-            int a, r, g, b;
-
-            y_values = echart_serie_values_get(serie);
-            yv = (double *)y_values->members;
-            cols = echart_serie_color_get(serie);
-            opacity = echart_serie_opacity_get(serie);
-
-            line = evas_vg_shape_add(sd->root);
-            evas_vg_shape_append_move_to(line,
-                                         1.5, sd->h_vg * (ymax - yv[0]) / (ymax -  ymin) + 0.5);
-            for (i = 1; i < (int)x_values->len; i++)
-            {
-                evas_vg_shape_append_line_to(line,
-                                             sd->w_vg * (xv[i] - xv[0]) / (xv[x_values->len - 1] - xv[0]) + 0.5,
-                                             sd->h_vg * (ymax - yv[i]) / (ymax -  ymin) + 0.5);
-            }
-            evas_vg_shape_append_line_to(line, sd->w_vg - 0.5, sd->h_vg - 0.5);
-            evas_vg_shape_append_line_to(line, 1.5, sd->h_vg - 0.5);
-            evas_vg_shape_append_close(line);
-
-            a = 255 * opacity;
-            r = ((COL_TO_R(cols.area) * a) >> 8);
-            g = ((COL_TO_G(cols.area) * a) >> 8);
-            b = ((COL_TO_B(cols.area) * a) >> 8);
-
-            evas_vg_node_color_set(line, r, g, b, a);
-        }
-    }
-
     EINA_LIST_FOREACH(series, l, serie)
     {
         const Eina_Inarray *y_values;
+        Efl_VG *line_area;
         Echart_Colors cols;
         double *yv;
+        Evas_Coord x;
+        Evas_Coord y;
 
         y_values = echart_serie_values_get(serie);
         yv = (double *)y_values->members;
         cols = echart_serie_color_get(serie);
 
         line = evas_vg_shape_add(sd->root);
-        evas_vg_shape_append_move_to(line,
-                                     1, sd->h_vg * (ymax - yv[0]) / (ymax -  ymin));
+        _echart_line_coords_get(sd,
+                                xv[0], xv[x_values->len - 1],
+                                ymin, ymax,
+                                xv[0], yv[0],
+                                &x, &y);
+        evas_vg_shape_append_move_to(line, x + 1, y);
+        if (echart_data_area_get(data))
+        {
+            line_area = evas_vg_shape_add(sd->root);
+            evas_vg_shape_append_move_to(line_area, x + 1, y);
+        }
         for (i = 1; i < (int)x_values->len; i++)
         {
-            evas_vg_shape_append_line_to(line,
-                                         sd->w_vg * (xv[i] - xv[0]) / (xv[x_values->len - 1] - xv[0]),
-                                         sd->h_vg * (ymax - yv[i]) / (ymax -  ymin));
+            _echart_line_coords_get(sd,
+                                    xv[0], xv[x_values->len - 1],
+                                    ymin, ymax,
+                                    xv[i], yv[i],
+                                    &x, &y);
+            evas_vg_shape_append_line_to(line, x, y);
+            if (echart_data_area_get(data))
+            {
+                evas_vg_shape_append_line_to(line_area, x, y);
+            }
         }
         evas_vg_shape_stroke_width_set(line, 2);
         evas_vg_shape_stroke_color_set(line,
@@ -506,6 +541,19 @@ _echart_line_smart_calculate(Evas_Object *obj)
                                        COL_TO_G(cols.line),
                                        COL_TO_B(cols.line),
                                        COL_TO_A(cols.line));
+        if (echart_data_area_get(data))
+        {
+            int a, r, g, b;
+
+            evas_vg_shape_append_line_to(line_area, sd->w_vg - sd->padding, sd->h_vg - sd->padding - 1);
+            evas_vg_shape_append_line_to(line_area, sd->padding + 1, sd->h_vg - sd->padding - 1);
+            evas_vg_shape_append_close(line_area);
+            a = 255 * echart_serie_opacity_get(serie);
+            r = ((COL_TO_R(cols.area) * a) >> 8);
+            g = ((COL_TO_G(cols.area) * a) >> 8);
+            b = ((COL_TO_B(cols.area) * a) >> 8);
+            evas_vg_node_color_set(line_area, r, g, b, a);
+        }
     }
 }
 
