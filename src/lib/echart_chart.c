@@ -106,6 +106,10 @@ echart_chart_free(Echart_Chart *chart)
 
     if (chart->data)
         echart_data_free(chart->data);
+    free(chart->title.text);
+    free(chart->title.fs.font_name);
+    free(chart->title_haxis.fs.font_name);
+    free(chart->title_vaxis.fs.font_name);
     free(chart);
 }
 

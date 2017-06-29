@@ -207,6 +207,7 @@ echart_data_free(Echart_Data *d)
         echart_serie_free(s);
     echart_serie_free(d->absciss);
     free(d->title);
+    free(d);
 }
 
 EAPI void

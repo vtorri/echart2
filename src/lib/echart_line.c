@@ -115,6 +115,7 @@ _echart_line_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EIN
 
     x_values = echart_serie_values_get(absciss);
     xv = (double *)x_values->members;
+
     echart_data_interval_get(data, &ymin, &ymax);
     n = (int)floor(log(ymax - ymin) / log(10));
     ymax = (floor(ymax / pow(10, n - 1)) + 1) * pow(10, n - 1);
@@ -131,24 +132,10 @@ _echart_line_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EIN
 
         y_values = echart_serie_values_get(serie);
         yv = (double *)y_values->members;
-        xp = 1;
-        xp += 10;
-        yp = sd->h_vg * (ymax - yv[0]) / (ymax -  ymin);
-        yp += sd->h_title + 10;
-        if ((ev->cur.canvas.x >= (xp - 3)) &&
-            (ev->cur.canvas.x <= (xp + 3)) &&
-            (ev->cur.canvas.y >= (yp - 3)) &&
-            (ev->cur.canvas.y <= (yp + 3)))
-        {
-            has_dot = EINA_TRUE;
-            xd = xp - 10;
-            yd = yp - (sd->h_title + 10);
-            cols = echart_serie_color_get(serie);
-        }
 
-        for (i = 1; i < x_values->len; i++)
+        for (i = 0; i < x_values->len; i++)
         {
-            xp = sd->w_vg * (xv[i] - xv[0]) / (xv[x_values->len - 1] - xv[0]);
+            xp = sd->w_vg * (xv[i] - xv[0]) / (xv[x_values->len - 1] - xv[0]) + 1;
             xp += 10;
             yp = sd->h_vg * (ymax - yv[i]) / (ymax -  ymin);
             yp += sd->h_title + 10;
@@ -429,8 +416,6 @@ _echart_line_smart_calculate(Evas_Object *obj)
     evas_vg_shape_stroke_width_set(line, 1);
     evas_vg_shape_stroke_color_set(line, 0, 0, 0, 255);
 
-    echart_chart_grid_nbr_get(sd->chart, &gxn, &gyn);
-
     /* lines */
     data = echart_chart_data_get(sd->chart);
     absciss = echart_data_absciss_get(data);
@@ -443,16 +428,20 @@ _echart_line_smart_calculate(Evas_Object *obj)
     ymax = (floor(ymax / pow(10, n - 1)) + 1) * pow(10, n - 1);
     col = echart_chart_grid_color_get(sd->chart);
 
-    for (i = 1; i <= gyn; i++)
+    echart_chart_grid_nbr_get(sd->chart, &gxn, &gyn);
+    if (gyn > 0)
     {
-        double y = i * (ymax - ymin) / gyn + ymin;
-        int j = (ymax - y) * (sd->h_vg - 1) / (ymax - ymin);
-        line = evas_vg_shape_add(sd->root);
-        evas_vg_shape_append_move_to(line, 0.5, j + 0.5);
-        evas_vg_shape_append_line_to(line, sd->w_vg - 0.5, j + 0.5);
-        evas_vg_shape_stroke_width_set(line, 1);
-        evas_vg_shape_stroke_color_set(line,
-                                       COL_TO_R(col), COL_TO_G(col), COL_TO_B(col), COL_TO_A(col));
+        for (i = 1; i <= gyn; i++)
+        {
+            double y = i * (ymax - ymin) / gyn + ymin;
+            int j = (ymax - y) * (sd->h_vg - 1) / (ymax - ymin);
+            line = evas_vg_shape_add(sd->root);
+            evas_vg_shape_append_move_to(line, 0.5, j + 0.5);
+            evas_vg_shape_append_line_to(line, sd->w_vg - 0.5, j + 0.5);
+            evas_vg_shape_stroke_width_set(line, 1);
+            evas_vg_shape_stroke_color_set(line,
+                                           COL_TO_R(col), COL_TO_G(col), COL_TO_B(col), COL_TO_A(col));
+        }
     }
 
     if (echart_data_area_get(data))

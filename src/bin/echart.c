@@ -109,6 +109,8 @@ int main()
 
     ecore_main_loop_begin();
 
+    echart_chart_free(chart);
+    echart_shutdown();
     ecore_evas_shutdown();
 
     return 0;
