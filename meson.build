@@ -8,12 +8,16 @@ dep_lib = [dependency('eina'),
 
 src_lib = ['src/lib/Echart.h',
            'src/lib/echart_chart.c',
+           'src/lib/echart_common.c',
            'src/lib/echart_data.c',
            'src/lib/echart_line.c',
            'src/lib/echart_main.c',
+           'src/lib/echart_vbar.c',
            'src/lib/echart_chart.h',
+           'src/lib/echart_common.h',
            'src/lib/echart_data.h',
            'src/lib/echart_line.h',
+           'src/lib/echart_vbar.h',
            'src/lib/echart_private.h']
 
 cflags = ['-Wall',

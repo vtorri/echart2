@@ -32,7 +32,7 @@
 #include "echart_data.h"
 #include "echart_chart.h"
 #include "echart_common.h"
-#include "echart_line.h"
+#include "echart_vbar.h"
 
 /*============================================================================*
  *                                  Local                                     *
@@ -42,40 +42,40 @@
  * @cond LOCAL
  */
 
-#define ECHART_LINE_SMART_OBJ_GET(smart, o, type) \
+#define ECHART_VBAR_SMART_OBJ_GET(smart, o, type) \
 { \
-    char *_echart_line_smart_str; \
+    char *_echart_vbar_smart_str; \
     if (!o) return; \
     smart = evas_object_smart_data_get(o); \
     if (!smart) return; \
-    _echart_line_smart_str = (char *)evas_object_type_get(o); \
-    if (!_echart_line_smart_str) return; \
-    if (strcmp(_echart_line_smart_str, type)) return; \
+    _echart_vbar_smart_str = (char *)evas_object_type_get(o); \
+    if (!_echart_vbar_smart_str) return; \
+    if (strcmp(_echart_vbar_smart_str, type)) return; \
 }
 
-#define ECHART_LINE_SMART_OBJ_GET_ERROR(smart, o, type) \
+#define ECHART_VBAR_SMART_OBJ_GET_ERROR(smart, o, type) \
 { \
-    char *_echart_line_smart_str; \
+    char *_echart_vbar_smart_str; \
     if (!o) goto _err; \
     smart = evas_object_smart_data_get(o); \
     if (!smart) goto _err; \
-    _echart_line_smart_str = (char *)evas_object_type_get(o); \
-    if (!_echart_line_smart_str) goto _err; \
-    if (strcmp(_echart_line_smart_str, type)) goto _err; \
+    _echart_vbar_smart_str = (char *)evas_object_type_get(o); \
+    if (!_echart_vbar_smart_str) goto _err; \
+    if (strcmp(_echart_vbar_smart_str, type)) goto _err; \
 }
 
-#define ECHART_LINE_OBJ_NAME "echart_line_object"
+#define ECHART_VBAR_OBJ_NAME "echart_vbar_object"
 
 typedef struct
 {
     Echart_Smart_Common common;
-    Efl_VG *dot;
+    double group_width;
 } Echart_Smart_Data;
 
-static Evas_Smart *_echart_line_smart = NULL;
+static Evas_Smart *_echart_vbar_smart = NULL;
 
 static void
-_echart_line_coords_get(const Echart_Smart_Data *sd,
+_echart_vbar_coords_get(const Echart_Smart_Data *sd,
                         double xmin, double xmax,
                         double ymin, double ymax,
                         double x, double y,
@@ -86,7 +86,7 @@ _echart_line_coords_get(const Echart_Smart_Data *sd,
 }
 
 static void
-_echart_line_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EINA_UNUSED, void *event)
+_echart_vbar_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EINA_UNUSED, void *event)
 {
     Echart_Smart_Data *sd;
     Evas_Event_Mouse_Move *ev;
@@ -104,7 +104,6 @@ _echart_line_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EIN
     double ymin;
     double ymax;
     int n;
-    Eina_Bool has_dot;
 
     sd = d;
     ev = event;
@@ -122,7 +121,6 @@ _echart_line_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EIN
     n = (int)floor(log(ymax - ymin) / log(10));
     ymax = (floor(ymax / pow(10, n - 1)) + 1) * pow(10, n - 1);
 
-    has_dot = EINA_FALSE;
 
     EINA_LIST_FOREACH(series, l, serie)
     {
@@ -137,7 +135,7 @@ _echart_line_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EIN
 
         for (i = 0; i < x_values->len; i++)
         {
-            _echart_line_coords_get(sd,
+            _echart_vbar_coords_get(sd,
                                     xv[0], xv[x_values->len - 1],
                                     ymin, ymax,
                                     xv[i], yv[i],
@@ -147,33 +145,29 @@ _echart_line_mouse_move_cb(void *d, Evas *evas EINA_UNUSED, Evas_Object *obj EIN
                 (ev->cur.canvas.y >= (y + offsets.top - 3)) &&
                 (ev->cur.canvas.y <= (y + offsets.top + 3)))
             {
-                has_dot = EINA_TRUE;
-                xd = x;
-                yd = y;
-                cols = echart_serie_color_get(serie);
             }
 
         }
     }
 
-    if (has_dot)
-    {
-        if (!sd->dot)
-        {
-            sd->dot = evas_vg_shape_add(sd->common.root);
-            evas_vg_shape_append_circle(sd->dot, xd, yd, 5);
-            evas_vg_node_color_set(sd->dot,
-                                   COL_TO_R(cols.line),
-                                   COL_TO_G(cols.line),
-                                   COL_TO_B(cols.line),
-                                   COL_TO_A(cols.line));
-        }
-    }
-    else
-    {
-        evas_vg_shape_reset(sd->dot);
-        sd->dot = NULL;
-    }
+    /* if (has_dot) */
+    /* { */
+    /*     if (!sd->dot) */
+    /*     { */
+    /*         sd->dot = evas_vg_shape_add(sd->root); */
+    /*         evas_vg_shape_append_circle(sd->dot, xd, yd, 5); */
+    /*         evas_vg_node_color_set(sd->dot, */
+    /*                                COL_TO_R(cols.line), */
+    /*                                COL_TO_G(cols.line), */
+    /*                                COL_TO_B(cols.line), */
+    /*                                COL_TO_A(cols.line)); */
+    /*     } */
+    /* } */
+    /* else */
+    /* { */
+    /*     evas_vg_shape_reset(sd->dot); */
+    /*     sd->dot = NULL; */
+    /* } */
 }
 
 static void
@@ -213,7 +207,7 @@ _echart_text_object_set(Evas_Object *obj,
 }
 
 static void
-_echart_line_smart_add(Evas_Object *obj)
+_echart_vbar_smart_add(Evas_Object *obj)
 {
     Echart_Smart_Data *sd;
 
@@ -225,20 +219,20 @@ _echart_line_smart_add(Evas_Object *obj)
     EINA_REFCOUNT_INIT((Echart_Smart_Common *)sd);
 
     sd->common.bg = evas_object_rectangle_add(evas_object_evas_get(obj));
-    evas_object_move(sd->common.bg, 0, 0);
     sd->common.title = evas_object_text_add(evas_object_evas_get(obj));
-    sd->common.ord = eina_inarray_new(sizeof(Evas_Object *), 0);
     sd->common.vg = evas_object_vg_add(evas_object_evas_get(obj));
     sd->common.root = evas_object_vg_root_node_get(sd->common.vg);
 
+    sd->group_width = 0.6180339887; /* golden number^-1 */
+
     evas_object_event_callback_add(sd->common.vg, EVAS_CALLBACK_MOUSE_MOVE,
-                                   _echart_line_mouse_move_cb, sd);
+                                   _echart_vbar_mouse_move_cb, sd);
 
     evas_object_smart_data_set(obj, sd);
 }
 
 static void
-_echart_line_smart_del(Evas_Object *obj)
+_echart_vbar_smart_del(Evas_Object *obj)
 {
     Echart_Smart_Data *sd;
 
@@ -257,7 +251,7 @@ _echart_line_smart_del(Evas_Object *obj)
 }
 
 static void
-_echart_line_smart_move(Evas_Object *obj, Evas_Coord x, Evas_Coord y)
+_echart_vbar_smart_move(Evas_Object *obj, Evas_Coord x, Evas_Coord y)
 {
     Echart_Smart_Data *sd;
     Evas_Coord ox;
@@ -283,7 +277,7 @@ _echart_line_smart_move(Evas_Object *obj, Evas_Coord x, Evas_Coord y)
 }
 
 static void
-_echart_line_smart_resize(Evas_Object *obj, Evas_Coord w, Evas_Coord h)
+_echart_vbar_smart_resize(Evas_Object *obj, Evas_Coord w, Evas_Coord h)
 {
     Echart_Smart_Data *sd;
 
@@ -292,13 +286,13 @@ _echart_line_smart_resize(Evas_Object *obj, Evas_Coord w, Evas_Coord h)
     sd = evas_object_smart_data_get(obj);
     EINA_SAFETY_ON_NULL_RETURN(sd);
 
-    /* FIXME: should do something here ? */
+    /* FIXME: manage resize */
 
     fprintf(stderr, " %s 2 : %dx%d\n", __FUNCTION__, w, h);
 }
 
 static void
-_echart_line_smart_show(Evas_Object *obj)
+_echart_vbar_smart_show(Evas_Object *obj)
 {
     Echart_Smart_Data *sd;
 
@@ -314,7 +308,7 @@ _echart_line_smart_show(Evas_Object *obj)
 }
 
 static void
-_echart_line_smart_hide(Evas_Object *obj)
+_echart_vbar_smart_hide(Evas_Object *obj)
 {
     Echart_Smart_Data *sd;
 
@@ -329,7 +323,7 @@ _echart_line_smart_hide(Evas_Object *obj)
 }
 
 static void
-_echart_line_smart_clip_set(Evas_Object *obj, Evas_Object *clip)
+_echart_vbar_smart_clip_set(Evas_Object *obj, Evas_Object *clip)
 {
     Echart_Smart_Data *sd;
 
@@ -344,7 +338,7 @@ _echart_line_smart_clip_set(Evas_Object *obj, Evas_Object *clip)
 }
 
 static void
-_echart_line_smart_clip_unset(Evas_Object *obj)
+_echart_vbar_smart_clip_unset(Evas_Object *obj)
 {
     Echart_Smart_Data *sd;
 
@@ -358,27 +352,77 @@ _echart_line_smart_clip_unset(Evas_Object *obj)
     evas_object_clip_unset(sd->common.vg);
 }
 
+static void
+_echart_vbar_add(const Echart_Smart_Data *sd,
+                 const Eina_List *series,
+                 unsigned int i,
+                 unsigned int idx,
+                 double xmin,
+                 double xmax,
+                 double ymin,
+                 double ymax,
+                 double x,
+                 double L)
+{
+    Evas_VG *r;
+    const Eina_Inarray *y_values;
+    const Echart_Serie *serie;
+    double *yv;
+    Echart_Colors cols;
+    Evas_Coord xc;
+    Evas_Coord yc;
+
+    serie = (const Echart_Serie *)eina_list_nth(series, idx);
+    y_values = echart_serie_values_get(serie);
+    yv = (double *)y_values->members;
+    cols = echart_serie_color_get(serie);
+
+    r = evas_vg_shape_add(sd->common.root);
+    _echart_vbar_coords_get(sd, xmin, xmax, ymin, ymax,
+                            x, ymin, &xc, &yc);
+    evas_vg_shape_append_move_to(r, xc, yc);
+    _echart_vbar_coords_get(sd, xmin, xmax, ymin, ymax,
+                            x, yv[i], &xc, &yc);
+    evas_vg_shape_append_line_to(r, xc, yc);
+    _echart_vbar_coords_get(sd, xmin, xmax, ymin, ymax,
+                            x + L, yv[i], &xc, &yc);
+    evas_vg_shape_append_line_to(r, xc, yc);
+    _echart_vbar_coords_get(sd, xmin, xmax, ymin, ymax,
+                            x + L, ymin, &xc, &yc);
+    evas_vg_shape_append_line_to(r, xc, yc);
+    evas_vg_shape_append_close(r);
+    evas_vg_node_color_set(r,
+                           COL_TO_R(cols.line),
+                           COL_TO_G(cols.line),
+                           COL_TO_B(cols.line),
+                           COL_TO_A(cols.line));
+}
 
 static void
-_echart_line_smart_calculate(Evas_Object *obj)
+_echart_vbar_smart_calculate(Evas_Object *obj)
 {
+    Echart_Font_Style fs;
     const Echart_Data *data;
     const Echart_Serie *absciss;
-    const Echart_Serie *serie;
     const Eina_List *series;
     const Eina_Inarray *x_values;
-    const Eina_List *l;
     Echart_Smart_Data *sd;
     unsigned int col;
-    Efl_VG *line;
+    Efl_VG *vbar;
     double *xv;
+    double xmin;
+    double xmax;
     double ymin;
     double ymax;
+    double x;
+    double l;
+    double L;
     int gyn;
     int w;
     int h;
     int n;
-    Echart_Offsets offsets;
+    unsigned int nbr_series;
+    unsigned int i;
 
     fprintf(stderr, " ** %s\n", __FUNCTION__);
 
@@ -396,7 +440,6 @@ _echart_line_smart_calculate(Evas_Object *obj)
     /* title */
     if (echart_chart_title_get(sd->common.chart))
     {
-        Echart_Font_Style fs;
         Evas_Coord w_title;
 
         echart_chart_title_style_get(sd->common.chart, &fs);
@@ -407,161 +450,98 @@ _echart_line_smart_calculate(Evas_Object *obj)
         evas_object_move(sd->common.title, (w - w_title) / 2, 0);
     }
 
-    data = echart_chart_data_get(sd->common.chart);
-    echart_data_interval_get(data, &ymin, &ymax);
-    n = (int)floor(log(ymax - ymin) / log(10));
-    ymax = (floor(ymax / pow(10, n - 1)) + 1) * pow(10, n - 1);
-
-    /* ordinate values */
-    echart_chart_grid_nbr_get(sd->common.chart, NULL, &gyn);
-    if (gyn > 0)
-    {
-        Echart_Font_Style fs;
-        Evas_Coord w_ord;
-        int i;
-
-        echart_chart_title_vaxis_style_get(sd->common.chart, &fs);
-        for (i = 0; i <=  gyn; i++)
-        {
-            char buf[128];
-            Evas_Object *t;
-            double y;
-            int j;
-
-            t = evas_object_text_add(evas_object_evas_get(obj));
-            snprintf(buf, sizeof(buf), "%d",
-                     (int)floor((ymax - ymin) * i / gyn + ymin));
-            buf[sizeof(buf) - 1] = '\0';
-            _echart_text_object_set(t, buf, &fs);
-            y = i * (ymax - ymin) / gyn + ymin;
-            j = (ymax - y) * (sd->common.h_vg - 1) / (ymax - ymin);
-            evas_object_geometry_get(t, NULL, NULL, &w_ord, NULL);
-            evas_object_move(t, 0/* (w - w_title) */, j);
-            eina_inarray_push(sd->common.ord, &t);
-        }
-    }
-
-    echart_offsets_get(sd->common.title, &offsets);
+    /* echart_chart_grid_nbr_get(sd->common.chart, NULL, &gyn); */
+    /* if (gyn > 0) */
+    /* { */
+    /* } */
 
     /* vg */
     echart_vg_set((Echart_Smart_Common *)sd);
 
     /* axis */
-    line = evas_vg_shape_add(sd->common.root);
-    evas_vg_shape_append_move_to(line, PAD(0.5), PAD(0.5));
-    evas_vg_shape_append_line_to(line, PAD(0.5), sd->common.h_vg - PAD(0.5));
-    evas_vg_shape_append_line_to(line, sd->common.w_vg - PAD(0.5), sd->common.h_vg - PAD(0.5));
-    evas_vg_shape_stroke_width_set(line, 1);
-    evas_vg_shape_stroke_color_set(line, 0, 0, 0, 255);
+    vbar = evas_vg_shape_add(sd->common.root);
+    evas_vg_shape_append_move_to(vbar, PAD(0.5), PAD(0.5));
+    evas_vg_shape_append_line_to(vbar, PAD(0.5), sd->common.h_vg - PAD(0.5));
+    evas_vg_shape_append_line_to(vbar, sd->common.w_vg - PAD(0.5), sd->common.h_vg - PAD(0.5));
+    evas_vg_shape_stroke_width_set(vbar, 1);
+    evas_vg_shape_stroke_color_set(vbar, 0, 0, 0, 255);
 
-    /* lines */
+    /* vbars */
+    data = echart_chart_data_get(sd->common.chart);
     absciss = echart_data_absciss_get(data);
     x_values = echart_serie_values_get(absciss);
     xv = (double *)x_values->members;
     series = echart_data_series_get(data);
+    nbr_series = eina_list_count(series);
 
+    echart_data_interval_get(data, &ymin, &ymax);
+    n = (int)floor(log(ymax - ymin) / log(10));
+    ymax = (floor(ymax / pow(10, n - 1)) + 1) * pow(10, n - 1);
     col = echart_chart_grid_color_get(sd->common.chart);
 
     echart_chart_grid_nbr_get(sd->common.chart, NULL, &gyn);
     if (gyn > 0)
     {
-        int i;
-
-        for (i = 1; i <= gyn; i++)
+        for (i = 1; i <= (unsigned int)gyn; i++)
         {
             double y = i * (ymax - ymin) / gyn + ymin;
             int j = (ymax - y) * (sd->common.h_vg - 1) / (ymax - ymin);
-            line = evas_vg_shape_add(sd->common.root);
-            evas_vg_shape_append_move_to(line, PAD(0.5), j + PAD(0.5));
-            evas_vg_shape_append_line_to(line, sd->common.w_vg - PAD2(0.5), j + PAD(0.5));
-            evas_vg_shape_stroke_width_set(line, 1);
-            evas_vg_shape_stroke_color_set(line,
+            vbar = evas_vg_shape_add(sd->common.root);
+            evas_vg_shape_append_move_to(vbar, PAD(0.5), j + PAD(0.5));
+            evas_vg_shape_append_line_to(vbar, sd->common.w_vg - PAD2(0.5), j + PAD(0.5));
+            evas_vg_shape_stroke_width_set(vbar, 1);
+            evas_vg_shape_stroke_color_set(vbar,
                                            COL_TO_R(col), COL_TO_G(col), COL_TO_B(col), COL_TO_A(col));
         }
     }
 
-    EINA_LIST_FOREACH(series, l, serie)
+    xmin = xv[0];
+    xmax = xv[x_values->len - 1];
+    l = (1 - sd->group_width) * (xmax - xmin) / (x_values->len + 1);
+    L = sd->group_width * (xmax - xmin) / x_values->len;
+    x = xmin + l;
+    for (i = 0; i < x_values->len; i++)
     {
-        const Eina_Inarray *y_values;
-        Efl_VG *line_area;
-        Echart_Colors cols;
-        double *yv;
-        Evas_Coord x;
-        Evas_Coord y;
-        int i;
+        double bx;
+        double bl;
+        unsigned int j;
 
-        y_values = echart_serie_values_get(serie);
-        yv = (double *)y_values->members;
-        cols = echart_serie_color_get(serie);
 
-        line = evas_vg_shape_add(sd->common.root);
-        _echart_line_coords_get(sd,
-                                xv[0], xv[x_values->len - 1],
-                                ymin, ymax,
-                                xv[0], yv[0],
-                                &x, &y);
-        evas_vg_shape_append_move_to(line, x + 1, y);
-        if (echart_data_area_get(data))
+        bl = L / nbr_series;
+        bx = x;
+        for (j = 0; j < nbr_series; j++)
         {
-            line_area = evas_vg_shape_add(sd->common.root);
-            evas_vg_shape_append_move_to(line_area, x + 1, y);
+            _echart_vbar_add(sd, series, i, j,
+                             xmin, xmax, ymin, ymax,
+                             bx, bl);
+            bx += bl;
         }
-        for (i = 1; i < (int)x_values->len; i++)
-        {
-            _echart_line_coords_get(sd,
-                                    xv[0], xv[x_values->len - 1],
-                                    ymin, ymax,
-                                    xv[i], yv[i],
-                                    &x, &y);
-            evas_vg_shape_append_line_to(line, x, y);
-            if (echart_data_area_get(data))
-            {
-                evas_vg_shape_append_line_to(line_area, x, y);
-            }
-        }
-        evas_vg_shape_stroke_width_set(line, 2);
-        evas_vg_shape_stroke_color_set(line,
-                                       COL_TO_R(cols.line),
-                                       COL_TO_G(cols.line),
-                                       COL_TO_B(cols.line),
-                                       COL_TO_A(cols.line));
-        if (echart_data_area_get(data))
-        {
-            int a, r, g, b;
 
-            evas_vg_shape_append_line_to(line_area, sd->common.w_vg - sd->common.padding, sd->common.h_vg - sd->common.padding - 1);
-            evas_vg_shape_append_line_to(line_area, sd->common.padding + 1, sd->common.h_vg - sd->common.padding - 1);
-            evas_vg_shape_append_close(line_area);
-            a = 255 * echart_serie_opacity_get(serie);
-            r = ((COL_TO_R(cols.area) * a) >> 8);
-            g = ((COL_TO_G(cols.area) * a) >> 8);
-            b = ((COL_TO_B(cols.area) * a) >> 8);
-            evas_vg_node_color_set(line_area, r, g, b, a);
-        }
+        x += l + L;
     }
 }
 
 static void
-_echart_line_smart_init(void)
+_echart_vbar_smart_init(void)
 {
-    static Evas_Smart_Class sc = EVAS_SMART_CLASS_INIT_NAME_VERSION(ECHART_LINE_OBJ_NAME);
+    static Evas_Smart_Class sc = EVAS_SMART_CLASS_INIT_NAME_VERSION(ECHART_VBAR_OBJ_NAME);
 
-    if (_echart_line_smart) return;
+    if (_echart_vbar_smart) return;
 
     if (!sc.add)
     {
-        sc.add = _echart_line_smart_add;
-        sc.del = _echart_line_smart_del;
-        sc.move = _echart_line_smart_move;
-        sc.resize = _echart_line_smart_resize;
-        sc.show = _echart_line_smart_show;
-        sc.hide = _echart_line_smart_hide;
-        sc.clip_set = _echart_line_smart_clip_set;
-        sc.clip_unset = _echart_line_smart_clip_unset;
-/*         sc.callbacks = _echart_line_smart_callbacks; */
-        sc.calculate = _echart_line_smart_calculate;
+        sc.add = _echart_vbar_smart_add;
+        sc.del = _echart_vbar_smart_del;
+        sc.move = _echart_vbar_smart_move;
+        sc.resize = _echart_vbar_smart_resize;
+        sc.show = _echart_vbar_smart_show;
+        sc.hide = _echart_vbar_smart_hide;
+        sc.clip_set = _echart_vbar_smart_clip_set;
+        sc.clip_unset = _echart_vbar_smart_clip_unset;
+/*         sc.callbacks = _echart_vbar_smart_callbacks; */
+        sc.calculate = _echart_vbar_smart_calculate;
     }
-    _echart_line_smart = evas_smart_class_new(&sc);
+    _echart_vbar_smart = evas_smart_class_new(&sc);
 }
 
 /**
@@ -577,24 +557,39 @@ _echart_line_smart_init(void)
  *============================================================================*/
 
 EAPI Evas_Object *
-echart_line_object_add(Evas *evas)
+echart_vbar_object_add(Evas *evas)
 {
     Evas_Object *obj;
 
-    _echart_line_smart_init();
-    obj = evas_object_smart_add(evas, _echart_line_smart);
+    _echart_vbar_smart_init();
+    obj = evas_object_smart_add(evas, _echart_vbar_smart);
 
     return obj;
 }
 
 EAPI void
-echart_line_object_chart_set(Evas_Object *obj, const Echart_Chart *chart)
+echart_vbar_object_chart_set(Evas_Object *obj, const Echart_Chart *chart)
 {
     Echart_Smart_Data *sd;
 
-    ECHART_LINE_SMART_OBJ_GET(sd, obj, ECHART_LINE_OBJ_NAME);
+    ECHART_VBAR_SMART_OBJ_GET(sd, obj, ECHART_VBAR_OBJ_NAME);
     INF("chart set");
 
     sd->common.chart = chart;
+    evas_object_smart_need_recalculate_set(obj, EINA_TRUE);
+}
+
+EAPI void
+echart_vbar_object_group_width_set(Evas_Object *obj, double group_width)
+{
+    Echart_Smart_Data *sd;
+
+    ECHART_VBAR_SMART_OBJ_GET(sd, obj, ECHART_VBAR_OBJ_NAME);
+    INF("chart set");
+
+    if ((group_width < 0.0) || (group_width > 1.0))
+        return;
+
+    sd->group_width = group_width;
     evas_object_smart_need_recalculate_set(obj, EINA_TRUE);
 }

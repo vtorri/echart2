@@ -33,6 +33,7 @@
 #include <echart_data.h>
 #include <echart_chart.h>
 #include <echart_line.h>
+#include <echart_vbar.h>
 
 static void
 _echart_delete_cb(Ecore_Evas *ee EINA_UNUSED)
@@ -100,8 +101,10 @@ int main()
     echart_chart_size_get(chart, &w, &h);
     echart_chart_background_color_set(chart, 0xffffffff);
 
-    o = echart_line_object_add(evas);
-    echart_line_object_chart_set(o, chart);
+    /* o = echart_line_object_add(evas); */
+    /* echart_line_object_chart_set(o, chart); */
+    o = echart_vbar_object_add(evas);
+    echart_vbar_object_chart_set(o, chart);
     evas_object_show(o);
 
     ecore_evas_resize(ee, w, h);
