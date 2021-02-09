@@ -41,7 +41,7 @@ _echart_delete_cb(Ecore_Evas *ee EINA_UNUSED)
     ecore_main_loop_quit();
 }
 
-int main()
+int main(void)
 {
     Ecore_Evas *ee;
     Evas *evas;
@@ -101,10 +101,13 @@ int main()
     echart_chart_size_get(chart, &w, &h);
     echart_chart_background_color_set(chart, 0xffffffff);
 
-    /* o = echart_line_object_add(evas); */
-    /* echart_line_object_chart_set(o, chart); */
+#if 1
+    o = echart_line_object_add(evas);
+    echart_line_object_chart_set(o, chart);
+#else
     o = echart_vbar_object_add(evas);
     echart_vbar_object_chart_set(o, chart);
+#endif
     evas_object_show(o);
 
     ecore_evas_resize(ee, w, h);

@@ -221,7 +221,8 @@ _echart_vbar_smart_add(Evas_Object *obj)
     sd->common.bg = evas_object_rectangle_add(evas_object_evas_get(obj));
     sd->common.title = evas_object_text_add(evas_object_evas_get(obj));
     sd->common.vg = evas_object_vg_add(evas_object_evas_get(obj));
-    sd->common.root = evas_object_vg_root_node_get(sd->common.vg);
+    sd->common.root = evas_vg_container_add(sd->common.vg);
+    evas_object_vg_root_node_set(sd->common.vg, sd->common.root);
 
     sd->group_width = 0.6180339887; /* golden number^-1 */
 
@@ -364,7 +365,7 @@ _echart_vbar_add(const Echart_Smart_Data *sd,
                  double x,
                  double L)
 {
-    Evas_VG *r;
+    Efl_VG *r;
     const Eina_Inarray *y_values;
     const Echart_Serie *serie;
     double *yv;

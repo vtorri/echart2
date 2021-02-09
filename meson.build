@@ -40,7 +40,8 @@ libm = cc.find_library('m', required : true)
 dep_bin = shared_library('echart',
                          src_lib,
                          c_args : cflags_lib,
-                         dependencies : [dep_lib, libm])
+                         dependencies : [dep_lib, libm],
+                         install      : true)
 
 ### Binary
 
@@ -56,7 +57,8 @@ executable('echart',
            dependencies : [dep_bin,
                            dependency('ecore-evas'),
                            dependency('ecore'),
-                           dep_lib])
+                           dep_lib],
+           install      : true)
 
 ### config.h
 

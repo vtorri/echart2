@@ -229,7 +229,8 @@ _echart_line_smart_add(Evas_Object *obj)
     sd->common.title = evas_object_text_add(evas_object_evas_get(obj));
     sd->common.ord = eina_inarray_new(sizeof(Evas_Object *), 0);
     sd->common.vg = evas_object_vg_add(evas_object_evas_get(obj));
-    sd->common.root = evas_object_vg_root_node_get(sd->common.vg);
+    sd->common.root = evas_vg_container_add(sd->common.vg);
+    evas_object_vg_root_node_set(sd->common.vg, sd->common.root);
 
     evas_object_event_callback_add(sd->common.vg, EVAS_CALLBACK_MOUSE_MOVE,
                                    _echart_line_mouse_move_cb, sd);
